@@ -1,0 +1,63 @@
+const { app, BrowserWindow, ipcMain } = require('electron');
+const path = require('path');
+
+// Disable hardware acceleration to address potential graphics issues
+app.disableHardwareAcceleration();
+
+let mainWindow;
+
+const createWindow = () => {
+  mainWindow = new BrowserWindow({
+    width: 1900,
+    height: 1400,
+    frame: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      enableRemoteModule: false,
+      nodeIntegration: false
+    },
+    autoHideMenuBar: true // Hide the menu bar by default
+  });
+
+  mainWindow.loadURL('http://192.168.0.2:5050');
+
+  // Open DevTools (optional, for debugging)
+  // mainWindow.webContents.openDevTools();
+};
+
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+// IPC communication
+ipcMain.on('minimize', () => {
+  if (mainWindow) {
+    mainWindow.minimize();
+  }
+});
+
+ipcMain.on('maximize', () => {
+  if (mainWindow) {
+    mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
+  }
+});
+
+ipcMain.on('close', () => {
+  if (mainWindow) {
+    mainWindow.close();
+  }
+});
+
